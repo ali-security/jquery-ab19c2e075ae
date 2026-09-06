@@ -1,3 +1,11 @@
 language: node_js
 node_js:
 - '0.10'
+services:
+- docker
+script:
+# Upstream's leg: builds dist/ and runs the jsonlint/jshint/jscs gates.
+- npm test
+# jQuery 1.11's unit suite is a browser QUnit suite that upstream ran through
+# TestSwarm; test/ci runs that same test/index.html headlessly instead.
+- docker run --rm --shm-size=1g -v "$PWD":/src -w /src node:20-bookworm bash /src/test/ci/run-tests.sh
