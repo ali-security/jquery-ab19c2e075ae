@@ -1103,6 +1103,29 @@ test("jQuery.extend(Object, Object)", function() {
 	deepEqual( options2, options2Copy, "Check if not modified: options2 must not be modified" );
 });
 
+test( "jQuery.extend( true, ... ) Object.prototype pollution", function() {
+	expect( 4 );
+
+	var shallowTarget,
+		deepPayload = JSON.parse( "{\"__proto__\": {\"devMode\": true}}" ),
+		shallowPayload = JSON.parse( "{\"__proto__\": {\"shallowDevMode\": true}}" );
+
+	// Sanity check: the attack relies on an own, enumerable "__proto__" key
+	ok( Object.prototype.hasOwnProperty.call( deepPayload, "__proto__" ),
+		"JSON.parse creates an own __proto__ property" );
+
+	jQuery.extend( true, {}, deepPayload );
+	ok( !( "devMode" in {} ), "Object.prototype not polluted" );
+	strictEqual( jQuery.fn.devMode, undefined, "jQuery.fn not polluted through Object.prototype" );
+
+	// Should the guard ever regress, don't leak the pollution into the rest of the suite
+	delete Object.prototype.devMode;
+
+	shallowTarget = jQuery.extend( {}, shallowPayload );
+	ok( !( "shallowDevMode" in shallowTarget ),
+		"The target's prototype is not replaced by a __proto__ source property" );
+});
+
 test("jQuery.each(Object,Function)", function() {
 	expect( 23 );
 
